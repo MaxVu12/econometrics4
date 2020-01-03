@@ -1,0 +1,76 @@
+---
+title: "ECON 323 Assignment 4"
+output: html_notebook
+---
+
+# Loading the librares
+```{r}
+library(foreign)
+library(plm)
+library(stargazer)
+library(car)
+```
+
+# Loading the data 
+```{r load data}
+rm(list=ls())
+
+db <- read.csv("a4data.csv", header = TRUE, stringsAsFactors = FALSE)
+db$y <- db$X65y_over/db$all_ages
+db$x_gdp <- db$GDP/db$all_ages
+colnames(db)
+```
+
+```{r visualize the data}
+coplot(y ~ year|id, type="l", data=db)
+scatterplot(y ~ year|id, boxplot=FALSE, smooth=TRUE, data=db)
+```
+
+```{r declare panel data}
+db.p <- pdata.frame(db, index=c("id", "year"))
+```
+
+# Pooled OLS model 
+```{r pooled OLS}
+pooled_ols <- plm(y ~ x_gdp + LE, data=db.p, model="pooling")
+stargazer(pooled_ols, title='Pooled OLS model', type="text", digits= 4)
+```
+
+# Pooled OLS estimator (time trend considered)
+```{r pooled w/ time trend}
+pooled_ols <- plm(y ~ x_gdp + LE + time_trend, data=db.p, model="pooling")
+stargazer(pooled_ols, title='Pooled OLS model', type="text", digits= 4)
+```
+
+# Fixed effect estimator
+```{r fixed effect}
+fixedeff <- plm(y ~ x_gdp + LE, data=db.p, model="within")
+stargazer(fixedeff, title='Fixed effect model', type="text", digits= 4)
+```
+
+# Between estimator
+```{r between}
+randomeff <- plm(y ~ x_gdp + LE, data=db.p, model="between")
+stargazer(randomeff, title='Random effect model', type="text", digits= 4)
+```
+
+# First differenced estimator
+```{r first differenced}
+firstdiff <- plm(y ~ x_gdp + LE, data=db.p, model="fd")
+stargazer(firstdiff, title='First differenced effect model', type="text", digits= 4)
+```
+
+# Random effect model 
+```{r random effect}
+randomeff <- plm(y ~ x_gdp + LE, data=db.p, model="random")
+stargazer(randomeff, title='Random effect model', type="text", digits= 4)
+```
+
+# Test for serial correlation
+```{r test for serial correlation}
+pwartest(y ~ x_gdp + LE + time_trend, data=db.p)
+```
+
+
+
+
